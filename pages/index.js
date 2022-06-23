@@ -1,19 +1,19 @@
 import Head from 'next/head'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { FaChessQueen } from 'react-icons/fa'
 
 import { executeHillClimbing } from '../utils'
 
 const initialState = [
-  [true, false, false, false, false, false, false, false],
-  [true, false, false, false, false, false, false, false],
-  [false, false, false, true, false, false, false, false],
-  [false, false, false, false, true, false, false, false],
-  [false, false, false, false, true, false, false, false],
-  [false, false, false, false, false, false, true, false],
-  [false, false, true, false, false, false, false, false],
-  [false, false, false, false, false, false, false, true],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
+  [false, false, false, false, false, false, false, false],
 ]
 
 const styleBoard = {
@@ -35,22 +35,43 @@ const styleBlock = {
 }
 
 export default function Home() {
-  const [board, setBoard] = useState(initialState)
+  const [board, setBoard] = useState([])
   const [message, setMessage] = useState('')
 
   function reset() {
-    setBoard(initialState)
+    setBoard(randomState())
     setMessage('')
   }
 
   function resolver() {
-    const finalBoard = executeHillClimbing(board)
+    const { finalBoard, nSteps } = executeHillClimbing(board)
     if (finalBoard === -1) {
-      setMessage('count not solve')
+      setMessage(`count not solve in ${nSteps} n steps`)
       return
     }
+    setMessage(`Success solve in ${nSteps} n steps`)
     setBoard(finalBoard)
   }
+
+  const randomState = useCallback(() => {
+    const newState = initialState.map((arr) => arr.slice())
+    for (let i = 0; i < initialState.length; i++) {
+      const queenIndex = getRandomInt(0, 7)
+      newState[i][queenIndex] = true
+    }
+    console.table(newState)
+    return newState
+  }, [])
+
+  function getRandomInt(min, max) {
+    min = Math.ceil(min)
+    max = Math.floor(max)
+    return Math.floor(Math.random() * (max - min)) + min
+  }
+
+  useEffect(() => {
+    setBoard(randomState())
+  }, [randomState])
 
   return (
     <div>

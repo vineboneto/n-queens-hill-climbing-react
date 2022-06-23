@@ -126,11 +126,12 @@ export function hillClimbing(board) {
   let minH = 999999
   let nextBoard = deepCopy(board)
 
-  nSteps += 1
-
-  if (nSideMoves === maxInteractions) {
+  if (nSideMoves >= maxInteractions) {
     return -1
   }
+
+  nSteps += 1
+
   let sidewayMove = false
 
   for (let i = 0; i < board.length; i++) {
@@ -166,9 +167,9 @@ export function hillClimbing(board) {
 }
 
 export function executeHillClimbing(board) {
-  const finalBoard = hillClimbing(board)
   nSteps = 0
   nSideMoves = 0
+  const finalBoard = hillClimbing(board)
 
-  return finalBoard
+  return { finalBoard, nSteps }
 }
