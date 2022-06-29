@@ -36,20 +36,24 @@ const styleBlock = {
 
 export default function Home() {
   const [board, setBoard] = useState([])
+  const [attacks, setAttacks] = useState([])
   const [message, setMessage] = useState('')
 
   function reset() {
     setBoard(randomState())
+    setAttacks([])
     setMessage('')
   }
 
   function resolver() {
-    const { finalBoard, nSteps } = executeHillClimbing(board)
-    if (finalBoard === -1) {
-      setMessage(`count not solve in ${nSteps} n steps`)
+    const { finalBoard, nSteps, attacks } = executeHillClimbing(board)
+    if (nSteps >= 100) {
+      setAttacks(attacks)
+      setBoard(finalBoard)
+      setMessage(`could not solve in ${nSteps} steps, total attacks ${attacks.length / 2}`)
       return
     }
-    setMessage(`Success solve in ${nSteps} n steps`)
+    setMessage(`Success solve in ${nSteps} steps`)
     setBoard(finalBoard)
   }
 
@@ -59,7 +63,6 @@ export default function Home() {
       const queenIndex = getRandomInt(0, 7)
       newState[i][queenIndex] = true
     }
-    console.table(newState)
     return newState
   }, [])
 
@@ -87,15 +90,24 @@ export default function Home() {
             <div key={idx} style={{ display: 'flex' }}>
               {arr.map((value, idy) => {
                 const isOdd = (idx + idy) % 2 === 1
+                const isAttack = !!attacks.find(([x, y]) => x === idx && y === idy)
 
                 if (value) {
                   return (
-                    <div key={idy} style={{ ...styleBlock, backgroundColor: isOdd ? 'lightgray' : '#fff' }}>
+                    <div
+                      key={idy}
+                      style={{ ...styleBlock, backgroundColor: isAttack ? 'red' : isOdd ? 'lightgray' : '#fff' }}
+                    >
                       <FaChessQueen size={20} />
                     </div>
                   )
                 }
-                return <div key={idy} style={{ ...styleBlock, backgroundColor: isOdd ? 'lightgray' : '#fff' }}></div>
+                return (
+                  <div
+                    key={idy}
+                    style={{ ...styleBlock, backgroundColor: isAttack ? 'red' : isOdd ? 'lightgray' : '#fff' }}
+                  />
+                )
               })}
             </div>
           )

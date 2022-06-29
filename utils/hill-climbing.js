@@ -6,128 +6,18 @@ function exists(i, j, length) {
   return i >= 0 && i < length && j >= 0 && j < length
 }
 
-function contains(i, j, l, m, queensPar) {
-  const key1 = JSON.stringify([i, j, l, m])
-  const key2 = JSON.stringify([l, m, i, j])
-  const already = queensPar.includes(key1) || queensPar.includes(key2)
-
-  if (already) return true
-  return false
-}
-
-function heuristicValue(board) {
-  const queensPar = []
-  let l = 0
-  let m = 0
-  let h = 0
-
-  for (let i = 0; i < board.length; i++) {
-    for (let j = 0; j < board.length; j++) {
-      if (board[i][j]) {
-        //Calcular ataques na horizontal
-        for (let k = 0; k < board.length; k++) {
-          const isQueen = board[i][k] === true
-          const isNotSelfElement = j !== k
-          const isNotVisited = !contains(i, j, i, k, queensPar)
-          if (isQueen && isNotSelfElement && isNotVisited) {
-            const key = JSON.stringify([i, j, i, k])
-            queensPar.push(key)
-            h += 1
-          }
-        }
-
-        // Calculate ataques verticais
-        for (let k = 0; k < board.length; k++) {
-          const isQueen = board[k][j] === true
-          const isNotSelfElement = i !== k
-          const isNotVisited = !contains(i, j, k, j, queensPar)
-          if (isQueen && isNotSelfElement && isNotVisited) {
-            const key = JSON.stringify([i, j, k, j])
-            queensPar.push(key)
-            h += 1
-          }
-        }
-
-        // Calculate / diagonal attacks
-        // First go up the diagonal
-        l = i - 1
-        m = j + 1
-        while (exists(l, m, board.length)) {
-          const isQueen = board[l][m] === true
-          const isNotVisited = !contains(i, j, l, m, queensPar)
-          if (isQueen && isNotVisited) {
-            const key = JSON.stringify([i, j, l, m])
-            queensPar.push(key)
-            h += 1
-          }
-          l = l - 1
-          m = m + 1
-        }
-
-        // Now go down the diagonal
-        l = i + 1
-        m = j - 1
-        while (exists(l, m, board.length)) {
-          const isQueen = board[l][m] === true
-          const isNotVisited = !contains(i, j, l, m, queensPar)
-          if (isQueen && isNotVisited) {
-            const key = JSON.stringify([i, j, l, m])
-            queensPar.push(key)
-            h += 1
-          }
-          l = l + 1
-          m = m - 1
-        }
-
-        //Calculate \ diagonal attacks
-        // First go up the diagonal
-        l = i - 1
-        m = j - 1
-        while (exists(l, m, board.length)) {
-          const isQueen = board[l][m] === true
-          const isNotVisited = !contains(i, j, l, m, queensPar)
-          if (isQueen && isNotVisited) {
-            const key = JSON.stringify([i, j, l, m])
-            queensPar.push(key)
-            h += 1
-          }
-          l = l - 1
-          m = m - 1
-        }
-
-        // Now go down the diagonal
-        l = i + 1
-        m = j + 1
-        while (exists(l, m, board.length)) {
-          const isQueen = board[l][m] === true
-          const isNotVisited = !contains(i, j, l, m, queensPar)
-          if (isQueen && isNotVisited) {
-            const key = JSON.stringify([i, j, l, m])
-            queensPar.push(key)
-            h += 1
-          }
-          l = l + 1
-          m = m + 1
-        }
-      }
-    }
-  }
-
-  return h
-}
-
 function deepCopy(arr) {
   return arr.map(function (arr) {
     return arr.slice()
   })
 }
 
-export function hillClimbing(board) {
+function hillClimbing(board) {
   let minH = 999999
   let nextBoard = deepCopy(board)
 
   if (nSideMoves >= maxInteractions) {
-    return -1
+    return nextBoard
   }
 
   nSteps += 1
@@ -141,7 +31,7 @@ export function hillClimbing(board) {
     for (let k = 0; k < board[0].length; k++) {
       if (k !== queen) {
         board[i][k] = true
-        let h = heuristicValue(board)
+        let h = findAllIndexAttacks(board).length / 2
         if (h <= minH) {
           minH = h
           nextBoard = deepCopy(board)
@@ -158,18 +48,101 @@ export function hillClimbing(board) {
   }
 
   if (minH === 0) {
-    console.log(`Number of steps required ${nSteps}`)
-    console.log(`Number of side moves required ${nSideMoves}`)
     return nextBoard
   }
 
   return hillClimbing(nextBoard)
 }
 
+function findAllIndexAttacks(board) {
+  const queensPar = []
+  const indexAttacks = []
+  let l = 0
+  let m = 0
+  let h = 0
+
+  for (let i = 0; i < board.length; i++) {
+    for (let j = 0; j < board.length; j++) {
+      if (board[i][j]) {
+        // Calculate horizontal attacks
+        for (let k = 0; k < board.length; k++) {
+          const isQueen = board[i][k] === true
+          const isNotSelfElement = j !== k
+          if (isQueen && isNotSelfElement) {
+            indexAttacks.push([i, j])
+          }
+        }
+
+        // Calculate vertical attacks
+        for (let k = 0; k < board.length; k++) {
+          const isQueen = board[k][j] === true
+          const isNotSelfElement = i !== k
+          if (isQueen && isNotSelfElement) {
+            indexAttacks.push([k, j])
+          }
+        }
+
+        // Calculate / diagonal attacks
+        // First go up the diagonal
+        l = i - 1
+        m = j + 1
+        while (exists(l, m, board.length)) {
+          const isQueen = board[l][m] === true
+          if (isQueen) {
+            indexAttacks.push([l, m])
+          }
+          l = l - 1
+          m = m + 1
+        }
+
+        // Now go down the diagonal
+        l = i + 1
+        m = j - 1
+        while (exists(l, m, board.length)) {
+          const isQueen = board[l][m] === true
+          if (isQueen) {
+            indexAttacks.push([l, m])
+          }
+          l = l + 1
+          m = m - 1
+        }
+
+        //Calculate \ diagonal attacks
+        // First go up the diagonal
+        l = i - 1
+        m = j - 1
+        while (exists(l, m, board.length)) {
+          const isQueen = board[l][m] === true
+          if (isQueen) {
+            indexAttacks.push([l, m])
+          }
+          l = l - 1
+          m = m - 1
+        }
+
+        // Now go down the diagonal
+        l = i + 1
+        m = j + 1
+        while (exists(l, m, board.length)) {
+          const isQueen = board[l][m] === true
+          if (isQueen) {
+            indexAttacks.push([l, m])
+          }
+          l = l + 1
+          m = m + 1
+        }
+      }
+    }
+  }
+
+  return indexAttacks
+}
+
 export function executeHillClimbing(board) {
   nSteps = 0
   nSideMoves = 0
   const finalBoard = hillClimbing(board)
+  const attacks = findAllIndexAttacks(finalBoard)
 
-  return { finalBoard, nSteps }
+  return { finalBoard, nSteps, attacks }
 }
